@@ -1,0 +1,16 @@
+# spaces between tokens are arbitrary ("MAP : PC 1" is OK, "MAP:PC 1" is not)
+# notes
+
+KICK is 36 # C3
+SR is 38 # D3
+HH is 40 # E3
+
+# loops
+
+BUMC = 1x4 | KICK HH | HH | SR HH | HH | 
+DNB  = 1x8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SNARE | HH | 
+
+# mapping 
+
+BUMC : PC 1
+BUMC : PC 2
