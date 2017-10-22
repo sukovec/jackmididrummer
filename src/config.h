@@ -11,32 +11,33 @@
 
 
 #include "log.h"
-#include "midi.h"
+#include "types.h"
 
-struct SendEvent {
+struct CfgSendEvent {
 	std::string name;
 	MIDI::EventType type; // type of event to send
 	int notecc; // note or CC/PC number
 };
 
-struct Mapping {
+struct CfgMapping {
 	std::string loopname;
 	MIDI::EventType type; // type of event to react
 	int notecc; // note or CC/PC number
 };
 
-struct Loop {
+struct CfgLoop {
 	std::string name;
-	int barnotes;
+	int barbeats;
 	int bars;
-	std::vector<std::vector<std::string>> notes;
+	std::vector<std::vector<std::string>> beats; // a beat contains vector of notes
 };
 
 struct Configuration {
 	int tempo;
-	std::vector<SendEvent> events;
-	std::vector<Mapping> mapping;
-	std::vector<Loop> loops;
+	int channel;
+	std::vector<CfgSendEvent> events;
+	std::vector<CfgMapping> mapping;
+	std::vector<CfgLoop> loops;
 };
 
 class Config {
@@ -50,12 +51,13 @@ class Config {
 		void ProcessLoop(std::vector<std::string> tokens);
 		void ProcessMapping(std::vector<std::string> tokens);
 		void SetChannel(std::vector<std::string> tokens);
+		void SetTempo(std::vector<std::string> tokens);
 
 		MIDI::EventType StrToEventType(std::string str);
 
-		std::vector<SendEvent> sendevts;
-		std::vector<Mapping> mappings;
-		std::vector<Loop> loops;
+		std::vector<CfgSendEvent> sendevts;
+		std::vector<CfgMapping> mappings;
+		std::vector<CfgLoop> loops;
 
 		/// members
 
@@ -63,4 +65,5 @@ class Config {
 
 		/// config:
 		int channel;
+		int tempo;
 };

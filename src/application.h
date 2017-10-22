@@ -15,6 +15,8 @@
 #include "loop.h"
 #include "jacker.h"
 #include "drummer.h"
+#include "notemap.h"
+#include "loopmgr.h"
 
 class Application {
 	public:

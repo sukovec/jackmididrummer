@@ -1,9 +1,6 @@
 #pragma once
 
-// Reference to a note 
-typedef int noteref_t;
+#include "log.h"
+#include "types.h"
 
-struct Beat {
-	int notes;
-	int[] emit;
-};
+// Reference to a note 

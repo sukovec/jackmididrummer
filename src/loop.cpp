@@ -1,6 +1,6 @@
 #include "loop.h"
 
-DrumLoop::DrumLoop(int bars, int div) {
+DrumLoop::DrumLoop(int bars, int div, Beat * beats) {
 	log("DrumLoop::DrumLoop(%d, %d)", bars, div);
 }
 

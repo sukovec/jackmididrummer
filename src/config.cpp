@@ -24,7 +24,9 @@ void Config::Open(const char * fname) {
 		std::istream_iterator<std::string> end;
 		std::vector<std::string> tokens(begin, end);
 
-		if (tokens[0].compare("CHANNEL") == 0) {
+		if (tokens[0].compare("TEMPO") == 0) {
+			this->SetTempo(tokens);
+		} else if (tokens[0].compare("CHANNEL") == 0) {
 			this->SetChannel(tokens);
 		} else if (tokens[1].compare("is") == 0) {
 			this->ProcessNote(tokens);
@@ -43,10 +45,17 @@ void Config::SetChannel(std::vector<std::string> tokens) {
 	log("  Channel set to %d", this->channel);
 }
 
+void Config::SetTempo(std::vector<std::string> tokens) {
+	log("Config::SetTempo()");
+	this->tempo = std::stoi(tokens[1]);
+
+	log("  Tempo set to %d", this->tempo);
+}
+
 void Config::ProcessNote(std::vector<std::string> tokens) {
 	log("Config::ProcessNote()");
 
-	SendEvent sev;
+	CfgSendEvent sev;
 
 	sev.name = tokens[0];
 	sev.type = this->StrToEventType(tokens[2]);
@@ -60,24 +69,24 @@ void Config::ProcessLoop(std::vector<std::string> tokens) {
 	log("Config::ProcessLoop()");
 	//DNB  = 1x8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SNARE | HH | 
 
-	Loop loop;
+	CfgLoop loop;
 	loop.name = tokens[0]; 
-	loop.barnotes = std::stoi(tokens[2]);
+	loop.barbeats = std::stoi(tokens[2]);
 	loop.bars = std::stoi(tokens[3]);
 	
 	if (tokens[4].compare("|") != 0) throw std::invalid_argument("Loop does not start with '|' character");
 
 	int i = 5; // there should be 
-	std::vector<std::string> notes;
+	std::vector<std::string> beats;
 	while (i < tokens.size()) {
 		if (tokens[i].compare("|") == 0) { // 
-			loop.notes.push_back(notes);
-			notes.clear();
+			loop.beats.push_back(beats);
+			beats.clear();
 		} else if (tokens[i].compare("!")) { // this will mark some space for configuration flags of loop
 			break;
 		}
 		else {
-			notes.push_back(tokens[i]);
+			beats.push_back(tokens[i]);
 		}
 	}
 
@@ -87,7 +96,7 @@ void Config::ProcessLoop(std::vector<std::string> tokens) {
 void Config::ProcessMapping(std::vector<std::string> tokens) {
 	log("Config::ProcessMapping()");
 
-	Mapping map;
+	CfgMapping map;
 
 	map.loopname = tokens[0];
 	map.type = this->StrToEventType(tokens[2]);
@@ -114,6 +123,9 @@ Configuration Config::GetConfiguration() {
 	ret.mapping = this->mappings;
 	ret.loops = this->loops;
 	ret.events = this->sendevts;
+
+	ret.channel = this->channel;
+	ret.tempo = this->tempo;
 
 	return ret;
 }

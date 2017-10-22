@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(jmidiexec)
 
-set(SOURCES amd.cpp loop.cpp config.cpp application.cpp)
+set(SOURCES src/amd.cpp src/loop.cpp src/config.cpp src/application.cpp src/jacker.cpp src/drummer.cpp src/notemap.cpp src/loopmgr.cpp)
 
 
 string(LENGTH "${CMAKE_SOURCE_DIR}/" SOURCE_PATH_SIZE)
