@@ -1,9 +1,27 @@
 #include "jacker.h"
 
+int jacker_process (jack_nframes_t nframes, void *arg) {
+	return ((Jacker*)arg)->Process(nframes);
+}
+
+void jacker_shutdown(void * arg) {
+	((Jacker*)arg)->Shutdown();
+}
+
+int jacker_bufsize_changed(jack_nframes_t size, void * arg) {
+	((Jacker*)arg)->BufferSizeChanged(size);
+}
+
+void jacker_error(const char * out) {
+	printf("\033[1;31mJack error: %s\033[0m\n", out);
+}
+
 Jacker::Jacker() {
 	log("Jacker::Jacker()");
 
 	this->jackcl = nullptr;
+	this->outbuffer = nullptr;
+
 }
 
 Jacker::~Jacker() {
@@ -14,16 +32,164 @@ Jacker::~Jacker() {
 
 void Jacker::Open() {
 	log("Jacker::Open()");
-	this->jackcl = jack_client_open("amd", JackNullOption, NULL);
+	jack_status_t status;
+	this->jackcl = jack_client_open("amd", JackNullOption, &status, nullptr);
 
 	if (this->jackcl == nullptr) 
 		throw std::invalid_argument("Cannot initialize jack interface");
 
 	log("Jack opened successfully");
+
+	jack_set_process_callback(this->jackcl, jacker_process, this);
+	jack_on_shutdown(this->jackcl, jacker_shutdown, this);
+	jack_set_error_function(jacker_error);
+	jack_set_info_function(jacker_error);
+
+	this->buffersize = jack_get_buffer_size(this->jackcl);
+	this->samplerate = jack_get_sample_rate(this->jackcl);
+
+	printf("Jack info: buffersize = %d, samplerate = %d\n", this->buffersize, this->samplerate);
+
+	this->CreatePorts();
+
+	if (jack_activate(this->jackcl) != 0) {
+		throw std::runtime_error("Cannot activate jack client");
+	}
+
+	log("Jacker::CreatePorts: Running!");
+
+	this->ConnectPorts();
 }
 
 void Jacker::Close() {
 	log("Jacker::Close()");
 
-	jack_client_close(this->jackcl);
+	if (this->jackcl != nullptr)
+		jack_client_close(this->jackcl);
+
+	this->jackcl = nullptr;
+}
+
+void Jacker::Run() {
+	log("Jacker::Run()");
+}
+
+int Jacker::Process(jack_nframes_t nframes) {
+	void * in = jack_port_get_buffer (this->input, nframes);
+	this->outbuffer = jack_port_get_buffer (this->output, nframes);
+	jack_midi_clear_buffer(this->outbuffer);
+
+	jack_nframes_t cnt = jack_midi_get_event_count(in);
+
+	jack_midi_event_t jme;
+	for (int i = 0; i < cnt; i++)  {
+		jack_midi_event_get(&jme, in, i);
+
+		this->ProcessMessage(jme);
+	}
+
+
+	if (this->generatorcallback.IsSet())
+		this->generatorcallback(this);
+
+	this->outbuffer = nullptr;
+
+	return 0;
+}
+
+void Jacker::ProcessMessage(jack_midi_event_t & evt) {
+	MIDI::Message msg = MIDI::Message::FromBuffer(evt.buffer, evt.size);
+	if (msg.IsValid()) { // Can I definitely ignore time member in evt?
+		log("Received valid message");
+
+		if (this->msgcallback.IsSet())
+			this->msgcallback(msg);
+	}
+}
+
+void Jacker::Shutdown() {
+	log("Jacker::Shutdown()");
+}
+int Jacker::BufferSizeChanged(jack_nframes_t size) {
+	log("Jacker::BufferSizeChanged(%d)", size);
+	
+	this->buffersize = size;
+}
+
+void Jacker::SetCallback(Delegate<void, MIDI::Message> callback) {
+	log("Jacker::SetCallback()");
+	this->msgcallback = callback;
+}
+
+void Jacker::SetGenerator(Delegate<void, Jacker *> callback) { 
+	log("Jacker::SetGenerator()");
+	
+	this->generatorcallback = callback;
+}
+
+void Jacker::SendMessage(MIDI::Message msg, int time) {
+	log("Jacker::SendMessage()");
+	
+	int32_t buffer; // 4 bytes should be enough for notes or cc/pc
+	int dtsz = msg.Encode(&buffer, sizeof(buffer));
+	if (dtsz < 1) {
+		log("Jacker::SendMessage: Invalid buffer passed");
+		return;
+	}
+
+	jack_midi_event_write(this->outbuffer, time, (jack_midi_data_t*)&buffer, (size_t)dtsz);
+}
+
+int Jacker::GetBufferSize() {
+	return this->buffersize;
+}
+
+int Jacker::GetSampleRate() {
+	return this->samplerate;
+}
+
+void Jacker::CreatePorts() {
+	log("Jacker::CreatePorts()");
+
+	this->input = jack_port_register (this->jackcl, "input", JACK_DEFAULT_MIDI_TYPE , JackPortIsInput, 0);
+	this->output = jack_port_register (this->jackcl, "output", JACK_DEFAULT_MIDI_TYPE , JackPortIsOutput, 0);
+
+	if (this->input == nullptr || this->output == nullptr) {
+		throw std::runtime_error("Creation of jack io ports was unsuccessfull");
+	}
+
+	printf("Input port: %s\nOutput port: %s\n", jack_port_name(this->input), jack_port_name(this->output));
+
+}
+
+// omg, remove this asap!
+#ifdef DEBUG
+#include <string.h>
+#endif
+
+void Jacker::ConnectPorts() {
+#ifdef DEBUG
+	printf("List ports");
+	const char **ports;
+	ports = jack_get_ports(this->jackcl, nullptr, "midi", JackPortIsOutput);
+
+	int index = -1;
+	for (int i = 0; ports[i] != nullptr; i++) {
+		printf("Port: %s\n", ports[i]);
+
+		if (index == -1) index = i; 
+		if (strstr(ports[i], "Fast Track") != nullptr)
+			index = i;
+	}
+
+	int ret = 666;
+	if (index != -1) {
+		log("jack_connect(client, %s, %s)", ports[index], jack_port_name(this->input));
+		ret = jack_connect(this->jackcl, ports[index], jack_port_name (this->input));
+		log("Jacker::CreatePorts: Connecting port to input %s (ret = %d)", ret == 0 ? "was successfull" : "failed", ret);
+	}
+
+	ret += jack_connect(this->jackcl, jack_port_name (this->output), "DrumGizmo:drumgizmo_midiin");
+	jack_free(ports);
+#endif
 }

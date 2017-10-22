@@ -17,20 +17,27 @@
 #include "drummer.h"
 #include "notemap.h"
 #include "loopmgr.h"
+#include "reactmgr.h"
+#include "delegate.h"
 
 class Application {
 	public:
-		Application(int argc, char ** argv);
+		Application();
 		~Application();
-		void Run();
+		void Run(int argc, char ** argv);
 		void Signal(int sig);
+		void Close();
 
 	private:
-		void MapConfiguration(Configuration & cfg);
+		void JackerCallback(MIDI::Message msg);
 
 	private:
 		Config cfg;
 		Jacker jack;
 		Drummer drummer;
+
+		NoteMap map;
+		LoopManager loops;
+		ReactManager reactions;
 
 };

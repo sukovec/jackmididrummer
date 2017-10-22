@@ -13,32 +13,6 @@
 #include "log.h"
 #include "types.h"
 
-struct CfgSendEvent {
-	std::string name;
-	MIDI::EventType type; // type of event to send
-	int notecc; // note or CC/PC number
-};
-
-struct CfgMapping {
-	std::string loopname;
-	MIDI::EventType type; // type of event to react
-	int notecc; // note or CC/PC number
-};
-
-struct CfgLoop {
-	std::string name;
-	int barbeats;
-	int bars;
-	std::vector<std::vector<std::string>> beats; // a beat contains vector of notes
-};
-
-struct Configuration {
-	int tempo;
-	int channel;
-	std::vector<CfgSendEvent> events;
-	std::vector<CfgMapping> mapping;
-	std::vector<CfgLoop> loops;
-};
 
 class Config {
 	public:

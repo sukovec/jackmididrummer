@@ -4,14 +4,20 @@
 #include <string>
 
 #include "log.h"
+#include "types.h"
 
 class DrumLoop {
 	public:
-	       	DrumLoop(int beats, int div, Beat * beats);
+	       	DrumLoop();
 		~DrumLoop();
+		void Initialize(int beatcount, int div, Beat * beats);
+		inline int GetBarBeats();
+		inline int GetTotalBeats();
+		inline Beat * GetBeat(int beat);
 
 	private:
+		bool initialized;
 		Beat * beats;
-		int beats;
+		int beatcount;
 		int div;
 };

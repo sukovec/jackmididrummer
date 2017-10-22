@@ -3,15 +3,17 @@
 #include <string>
 #include <map>
 
-#include "config.h"
+#include "log.h"
 #include "types.h"
 
 class NoteMap {
 	public:
-		NoteMap(std::vector<CfgSendEvent> notes);
+		NoteMap();
 		~NoteMap();
+		void Initialize(std::vector<CfgSendEvent> notes);
 		noteref_t GetNoteMapping(std::string note);
 		inline CfgSendEvent const & operator[] (noteref_t x);
+		void Stats();
 	private:
 		CfgSendEvent * evts;
 		std::map<std::string, noteref_t> nmap;

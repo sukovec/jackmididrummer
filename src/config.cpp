@@ -32,7 +32,7 @@ void Config::Open(const char * fname) {
 			this->ProcessNote(tokens);
 		} else if (tokens[1].compare("=") == 0) {
 			this->ProcessLoop(tokens);
-		} else if (tokens[1].compare(":") == 0) {
+		} else if (tokens[2].compare(":") == 0) {
 			this->ProcessMapping(tokens);
 		}
 	}
@@ -67,7 +67,6 @@ void Config::ProcessNote(std::vector<std::string> tokens) {
 
 void Config::ProcessLoop(std::vector<std::string> tokens) {
 	log("Config::ProcessLoop()");
-	//DNB  = 1x8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SNARE | HH | 
 
 	CfgLoop loop;
 	loop.name = tokens[0]; 
@@ -76,18 +75,24 @@ void Config::ProcessLoop(std::vector<std::string> tokens) {
 	
 	if (tokens[4].compare("|") != 0) throw std::invalid_argument("Loop does not start with '|' character");
 
+	log("Processing loop");
 	int i = 5; // there should be 
-	std::vector<std::string> beats;
+	std::vector<std::string> notes;
 	while (i < tokens.size()) {
 		if (tokens[i].compare("|") == 0) { // 
-			loop.beats.push_back(beats);
-			beats.clear();
-		} else if (tokens[i].compare("!")) { // this will mark some space for configuration flags of loop
+			log("  found |");
+			loop.beats.push_back(notes);
+			notes.clear();
+		} else if (tokens[i].compare("!") == 0) { // this will mark some space for configuration flags of loop
+			log("  found !");
 			break;
 		}
 		else {
-			beats.push_back(tokens[i]);
+			log("  found note");
+			notes.push_back(tokens[i]);
 		}
+
+		i++;
 	}
 
 	this->loops.push_back(loop);
@@ -96,11 +101,21 @@ void Config::ProcessLoop(std::vector<std::string> tokens) {
 void Config::ProcessMapping(std::vector<std::string> tokens) {
 	log("Config::ProcessMapping()");
 
+	// proces mapping in form
+	// MESSAGETYPE NUMBER : REACTION
+	// CC 25 : DRUMLOOP
+	// CC 26 : !TEMPO 66
+
 	CfgMapping map;
 
-	map.loopname = tokens[0];
-	map.type = this->StrToEventType(tokens[2]);
-	map.notecc = std::stoi(tokens[3]);
+
+	map.loopname = tokens[3];
+	map.type = this->StrToEventType(tokens[0]);
+	map.notecc = std::stoi(tokens[1]);
+
+	if (tokens.size() == 5) {
+		map.argument1 = std::stoi(tokens[4]);
+	}
 
 	this->mappings.push_back(map);
 }

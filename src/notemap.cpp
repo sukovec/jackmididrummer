@@ -1,8 +1,20 @@
 #include "notemap.h"
 
-NoteMap::NoteMap(std::vector<CfgSendEvent> notes) {
+NoteMap::NoteMap() {
 	log("NoteMap::NoteMap()");
+}
 
+noteref_t NoteMap::GetNoteMapping(std::string note) {
+	if (this->nmap.count(note) == 0) { // key doesn't exists
+		printf("Get mapping for note '%s'\n", note.c_str());
+		throw std::invalid_argument("Note mapping doesn't exists");
+	}
+
+	return this->nmap[note];
+}
+
+void NoteMap::Initialize(std::vector<CfgSendEvent> notes) {
+	log("NoteMap::Initialize()");
 	this->evts = new CfgSendEvent[notes.size()];
 
 	std::pair<std::map<std::string,int>::iterator,bool> ret;
@@ -18,18 +30,15 @@ NoteMap::NoteMap(std::vector<CfgSendEvent> notes) {
 	}
 }
 
-noteref_t NoteMap::GetNoteMapping(std::string note) {
-	if (this->nmap.count(note) == 0) { // key doesn't exists
-		throw std::invalid_argument("Note mapping doesn't exists");
-	}
-
-	return this->nmap[note];
-}
-
 CfgSendEvent const & NoteMap::operator[] (noteref_t x) {
 	return this->evts[x];
 }
+
 NoteMap::~NoteMap() {
 	log("NoteMap::~NoteMap()");
 	delete [] this->evts;
+}
+
+void NoteMap::Stats() {
+	printf("NoteMap: Have %d notes mapped\n", this->nmap.size());
 }

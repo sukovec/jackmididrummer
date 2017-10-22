@@ -3,24 +3,24 @@
 #include <string>
 #include <vector>
 
-#include "config.h"
 #include "notemap.h"
 #include "loop.h"
 
-typedef int loop_t;
-
 class LoopManager { 
 	public:
-		LoopManager(std::vector<CfgLoop> & loop, NoteMap & map);
+		LoopManager();
 		~LoopManager();
+		void Initialize(std::vector<CfgLoop> & loop, NoteMap & map);
 
-		loop_t GetLoopMapping(std::string loopname);
-		inline DrumLoop const & operator[] (loop_t x);
+		loopref_t GetLoopMapping(std::string loopname);
+		DrumLoop * GetLoop (loopref_t x);
+		void Stats();
 
 	private:
-		void ProcessLoop(CfgLoop & loop, NoteMap & map);
+		void ProcessLoop(CfgLoop & loop, NoteMap & map, int loopidx);
 
 	private:
+		int loopcount;
 		DrumLoop * loops;
-		std::map<std::string, loop_t> loopmap;
+		std::map<std::string, loopref_t> loopmap;
 };

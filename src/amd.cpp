@@ -1,13 +1,17 @@
 #include "application.h"
 
-void sighdl(int sig) {
+Application app;
 
+void sighdl(int sig) {
+	app.Close();
+	exit(0);
 }
 
 int main(int argc, char ** argv) {
-	Application app(argc, argv);
+	signal(SIGINT, sighdl);
+
 	try {
-		app.Run();
+		app.Run(argc, argv);
 	}
 	catch (std::exception const & ex) {
 		printf("\033[31mError:\033[0m %s\n", ex.what());

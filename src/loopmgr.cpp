@@ -1,13 +1,7 @@
 #include "loopmgr.h"
 
-LoopManager::LoopManager(std::vector<CfgLoop> & loops, NoteMap & map) {
+LoopManager::LoopManager() {
 	log("LoopManager::LoopManager()");
-
-	this->loops = new DrumLoop[loops.size()];
-	for (int i = 0; i < loops.size(); i++)
-		this->ProcessLoop(loops[i], map);
-
-
 }
 
 LoopManager::~LoopManager() {
@@ -16,19 +10,39 @@ LoopManager::~LoopManager() {
 	delete [] this->loops;
 }
 
-loop_t LoopManager::GetLoopMapping(std::string loopname) {
+void LoopManager::Initialize(std::vector<CfgLoop> & loops, NoteMap & map) {
+	log("LoopManager::Initialize()");
 
+	this->loopcount = loops.size();
+	this->loops = new DrumLoop[this->loopcount];
+	for (int i = 0; i < this->loopcount; i++)
+		this->ProcessLoop(loops[i], map, i);
 }
 
-DrumLoop const & LoopManager::operator[] (loopref_t x) {
+loopref_t LoopManager::GetLoopMapping(std::string loopname) {
+	if (this->loopmap.count(loopname) == 0) { // key doesn't exists
+		throw std::invalid_argument("Loop doesn't exists");
+	}
+
+	return this->loopmap[loopname];
+}
+
+DrumLoop * LoopManager::GetLoop (loopref_t x) {
 	log("LoopManager::operator [%d]", x);
+
+	return &this->loops[x];
+}
+
+void LoopManager::Stats() {
+	printf("LoopManager: Have %d loops\n", this->loopcount);
 }
 
 // private:
-void LoopManager::ProcessLoop(CfgLoop & loop, NoteMap & map) {
+void LoopManager::ProcessLoop(CfgLoop & loop, NoteMap & map, int loopidx) {
 	log("LoopManager::ProcessLoop()");
 
-	Beat beats[loop.beats.size()];
+	int bc = loop.beats.size();
+	Beat * beats = new Beat[bc];
 	for (int i = 0; i < loop.beats.size(); i++) {
 		beats[i].notecount = loop.beats[i].size();
 		beats[i].notes = new noteref_t[beats[i].notecount];
@@ -38,18 +52,6 @@ void LoopManager::ProcessLoop(CfgLoop & loop, NoteMap & map) {
 		}
 	}
 
-
-
-	/*struct Beat {
-		int notes;
-		noteref_t * emit;
-	};*/
-	/*
-	   struct Loop {
-	   std::string name;
-	   int barbeats;
-	   int bars;
-	   std::vector<std::vector<std::string>> beats;
-	   };*/
-
+	this->loops[loopidx].Initialize(bc, loop.barbeats, beats);
+	this->loopmap.insert(std::pair<std::string, loopref_t>(loop.name, loopidx));
 }
