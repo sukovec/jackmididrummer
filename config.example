@@ -22,13 +22,17 @@ HH is note 42 # E3
 # TODO: rewrite these numbers to something more sensible
 BUMC = 1 4 | KICK HH | HH | SR HH | HH | 
 DNB  = 1 8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SR | HH | 
+NEVIM = 1 8 | HH KICK | HH | HH SR | HH KICK | HH | HH KICK | HH SR | HH | 
+
 
 # mapping of starting
 
 PC 1 : BUMC
-PC 2 : BUMC
+PC 2 : NEVIM
 PC 3 : DNB
-PC 4 : !TEMPO 240
-PC 5 : !TEMPO 120
-note 50 : DNB
-CC 45 : !TEMPO 80
+
+
+PC 5 : 
+PC 6 :
+PC 7 :
+PC 8 :

@@ -23,6 +23,8 @@ void Drummer::ChangeLoop(loopref_t loop) {
 
 	this->next = this->loops->GetLoop(loop);
 
+	log("\tLoop beats: %d, div: %d", this->next->GetTotalBeats(), this->next->GetBarBeats());
+
 	if (!this->drumming) this->StartDrumming();
 }
 
@@ -69,12 +71,12 @@ void Drummer::Drum(Jacker * jack) {
 	int now = this->curpos % splperbeat;
 
 	if (cbeat == this->current->GetTotalBeats()) {
-		this->curpos -= splperbeat * (cbeat - 1);
+		this->curpos -= splperbeat * (cbeat);
 		cbeat = 0;
 		this->Proceed();
 	}
 
-	log("div: %d, splpb: %d, cbeat: %d, now: %d", div, splperbeat, cbeat, now);
+//	log("div: %d, splpb: %d, cbeat: %d, now: %d", div, splperbeat, cbeat, now);
 
 	if (now < this->buffersize) {
 		Beat * b = this->current->GetBeat(cbeat);

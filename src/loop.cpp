@@ -27,20 +27,14 @@ void DrumLoop::Initialize(int beatcount, int div, Beat * beats) {
 }
 
 int DrumLoop::GetBarBeats() {
-	log("Drummer::GetBarBeats()");
-
 	return this->div;
 }
 
 int DrumLoop::GetTotalBeats() {
-	log("Drummer::GetTotalBeats()");
-
 	return this->beatcount;
 }
 
 Beat * DrumLoop::GetBeat(int beat) {
-	log("Drummer::GetBeat()");
-
 	return &this->beats[beat];
 }
 
