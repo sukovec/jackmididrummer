@@ -12,7 +12,7 @@ class NoteMap {
 		~NoteMap();
 		void Initialize(std::vector<CfgSendEvent> notes);
 		noteref_t GetNoteMapping(std::string note);
-		inline CfgSendEvent const & operator[] (noteref_t x);
+		CfgSendEvent const & operator[] (noteref_t x);
 		void Stats();
 	private:
 		CfgSendEvent * evts;

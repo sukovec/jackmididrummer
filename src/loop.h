@@ -11,9 +11,9 @@ class DrumLoop {
 	       	DrumLoop();
 		~DrumLoop();
 		void Initialize(int beatcount, int div, Beat * beats);
-		inline int GetBarBeats();
-		inline int GetTotalBeats();
-		inline Beat * GetBeat(int beat);
+		int GetBarBeats();
+		int GetTotalBeats();
+		Beat * GetBeat(int beat);
 
 	private:
 		bool initialized;

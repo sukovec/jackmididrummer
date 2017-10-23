@@ -23,7 +23,7 @@ void Drummer::ChangeLoop(loopref_t loop) {
 
 	this->next = this->loops->GetLoop(loop);
 
-	this->StartDrumming();
+	if (!this->drumming) this->StartDrumming();
 }
 
 void Drummer::SetEmitChannel(int channel) {
@@ -62,21 +62,29 @@ void Drummer::UpdateParams(int splrate, int buffersize) {
 void Drummer::Drum(Jacker * jack) {
 	if (!this->drumming) return;
 
-	if (this->curpos % 20480 == 0) {
-		jack->SendMessage(MIDI::Message(MIDI::EventType::NoteOn, 1, 38, 127), 0);
+	int div = this->current->GetBarBeats();
+
+	int splperbeat = (this->splrate * 60) / (this->curtempo * div);
+	int cbeat = this->curpos / splperbeat;
+	int now = this->curpos % splperbeat;
+
+	if (cbeat == this->current->GetTotalBeats()) {
+		this->curpos -= splperbeat * (cbeat - 1);
+		cbeat = 0;
+		this->Proceed();
 	}
 
-	if (this->curpos % 20480 == 0) {
-		jack->SendMessage(MIDI::Message(MIDI::EventType::NoteOn, 1, 36, 127), 0);
+	log("div: %d, splpb: %d, cbeat: %d, now: %d", div, splperbeat, cbeat, now);
+
+	if (now < this->buffersize) {
+		Beat * b = this->current->GetBeat(cbeat);
+		for (int i = 0; i < b->notecount; i++) {
+			const CfgSendEvent c = (*this->notes)[b->notes[i]];
+			jack->SendMessage(MIDI::Message(c.type, this->curchannel, c.notecc, 127), now);
+		}
 	}
 
-	if (this->curpos % 20480 == 0) {
-		jack->SendMessage(MIDI::Message(MIDI::EventType::NoteOn, 1, 42, 127), 0);
-	}
-
-	if (this->curpos % 20480 == 0) {
-		jack->SendMessage(MIDI::Message(MIDI::EventType::NoteOn, 1, 49, 127), 0);
-	}
+	
 
 	this->curpos += this->buffersize;
 }
