@@ -1,16 +1,34 @@
 # spaces between tokens are arbitrary ("MAP : PC 1" is OK, "MAP:PC 1" is not)
-# notes
+# use only one space
+# everything is case sensitive
 
-KICK is 36 # C3
-SR is 38 # D3
-HH is 40 # E3
+# default channel to emit messages
+CHANNEL 1
+
+# default tempo, should be settable right in loop!
+TEMPO 120
+
+# default loop, that start to play right after initialiazation
+# DEFAULT DNB 
+
+# notes
+#
+
+KICK is note 36 # C3
+SR is note 38 # D3
+HH is note 42 # E3
 
 # loops
+# TODO: rewrite these numbers to something more sensible
+BUMC = 1 4 | KICK HH | HH | SR HH | HH | 
+DNB  = 1 8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SR | HH | 
 
-BUMC = 1x4 | KICK HH | HH | SR HH | HH | 
-DNB  = 1x8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SNARE | HH | 
+# mapping of starting
 
-# mapping 
-
-BUMC : PC 1
-BUMC : PC 2
+PC 1 : BUMC
+PC 2 : BUMC
+PC 3 : DNB
+PC 4 : !TEMPO 240
+PC 5 : !TEMPO 120
+note 50 : DNB
+CC 45 : !TEMPO 80
