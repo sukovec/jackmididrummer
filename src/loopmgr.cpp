@@ -21,6 +21,7 @@ void LoopManager::Initialize(std::vector<CfgLoop> & loops, NoteMap & map) {
 
 loopref_t LoopManager::GetLoopMapping(std::string loopname) {
 	if (this->loopmap.count(loopname) == 0) { // key doesn't exists
+		log("Getting the loop %s", loopname.c_str());
 		throw std::invalid_argument("Loop doesn't exists");
 	}
 
@@ -52,6 +53,7 @@ void LoopManager::ProcessLoop(CfgLoop & loop, NoteMap & map, int loopidx) {
 		}
 	}
 
-	this->loops[loopidx].Initialize(bc, loop.barbeats, beats);
+	this->loops[loopidx].Initialize(bc, loop.bars, beats);
+	
 	this->loopmap.insert(std::pair<std::string, loopref_t>(loop.name, loopidx));
 }

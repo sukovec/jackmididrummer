@@ -128,8 +128,6 @@ void Jacker::SetGenerator(Delegate<void, Jacker *> callback) {
 }
 
 void Jacker::SendMessage(MIDI::Message msg, int time) {
-	log("Jacker::SendMessage()");
-	
 	int32_t buffer; // 4 bytes should be enough for notes or cc/pc
 	int dtsz = msg.Encode(&buffer, sizeof(buffer));
 	if (dtsz < 1) {

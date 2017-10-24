@@ -66,7 +66,7 @@ void Drummer::Drum(Jacker * jack) {
 
 	int div = this->current->GetBarBeats();
 
-	int splperbeat = (this->splrate * 60) / (this->curtempo * div);
+	int splperbeat = (this->splrate * 60) / (this->curtempo * div / 4);
 	int cbeat = this->curpos / splperbeat;
 	int now = this->curpos % splperbeat;
 
