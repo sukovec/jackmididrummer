@@ -26,15 +26,16 @@ class Config {
 		void ProcessMapping(std::vector<std::string> tokens);
 		void SetChannel(std::vector<std::string> tokens);
 		void SetTempo(std::vector<std::string> tokens);
+		ReactType GetCommandType(std::string cmd, int & retargs);
 
 		MIDI::EventType StrToEventType(std::string str);
 
 		std::vector<CfgSendEvent> sendevts;
-		std::vector<CfgMapping> mappings;
+		std::vector<CfgMappings> mappings;
 		std::vector<CfgLoop> loops;
 
 		/// members
-
+		int cline;
 		bool opened;
 
 		/// config:

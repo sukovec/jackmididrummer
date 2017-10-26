@@ -48,25 +48,32 @@ void Application::Close() {
 	this->jack.Close();
 }
 
-void Application::JackerCallback(MIDI::Message msg) {
-	Reaction react = this->reactions.GetReaction(msg);
-	if (!react.set) {
-		log("Reaction: Do nothing");
-	       	return;
-	}
-
-	switch(react.react) {
+void Application::DoCommand(Command & cmd) {
+	switch(cmd.command) {
 		case ReactType::ChangeLoop:
-			this->drummer.ChangeLoop(react.chloop);
+			this->drummer.ChangeLoop(cmd.chloop);
 			break;
 		case ReactType::ChangeChannel:
-			this->drummer.SetEmitChannel(react.channel);
+			this->drummer.SetEmitChannel(cmd.channel);
 			break;
 		case ReactType::ChangeTempo:
-			this->drummer.SetTempo(react.tempo);
+			this->drummer.SetTempo(cmd.tempo);
 			break;
 		case ReactType::StopDrumming:
 			this->drummer.StopDrumming();
 			break;
+	}
+}
+
+void Application::JackerCallback(MIDI::Message msg) {
+	Reaction react = this->reactions.GetReaction(msg);
+	if (react.count == 0) {
+		printf("Received unmapped MIDI message: ");
+		msg.Print();
+	       	return;
+	}
+
+	for (int i = 0; i < react.count; i++) {
+		this->DoCommand(react.commands[i]);
 	}
 }

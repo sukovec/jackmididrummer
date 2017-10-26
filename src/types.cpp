@@ -69,4 +69,21 @@ namespace MIDI {
 
 		return sz;
 	}
+
+	void Message::Print() {
+		switch(this->evttype) {
+			case EventType::ControlChange:
+				printf("MIDI channel: %d ControlChange %d value %d\n", this->channel, this->notecc, this->velocity);
+				break;
+			case EventType::NoteOn:
+				printf("MIDI channel: %d NoteOn %d velocity %d\n", this->channel, this->notecc, this->velocity);
+				break;
+			case EventType::ProgramChange:
+				printf("MIDI channel: %d ProgramChange %d\n", this->channel, this->notecc);
+				break;
+			default:
+				printf("MIDI unknown message\n");
+				break;
+		}
+	}
 }

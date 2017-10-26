@@ -10,7 +10,7 @@ class ReactManager {
 	public:
 		ReactManager();
 		~ReactManager();
-		void Initialize(std::vector<CfgMapping> & map, LoopManager & mgr);
+		void Initialize(std::vector<CfgMappings> & map, LoopManager & mgr);
 		void Stats();
 
 		Reaction & GetReaction(MIDI::Message msg);
@@ -19,5 +19,5 @@ class ReactManager {
 		Reaction * midicc;
 		Reaction * midipc;
 
-		Reaction empty { ReactType::DoNothing, false, 0 };
+		Reaction empty { 0, nullptr };
 };

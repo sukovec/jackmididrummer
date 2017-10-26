@@ -22,6 +22,7 @@ namespace MIDI {
 		int Encode(void * buf, int bufsize);
 		bool IsValid() { return channel != 255; }
 		static Message FromBuffer(void * buffer, int size); 
+		void Print();
 	};
 
 }
@@ -39,11 +40,12 @@ enum class ReactType {
 	ChangeTempo,
 	ChangeChannel,
 	StopDrumming,
+	TapTempo,
 	DoNothing // in case of error or whatever
 };
-struct Reaction {
-	ReactType react;
-	bool set;
+
+struct Command {
+	ReactType command;
 	union {
 		loopref_t chloop;
 		int tempo; 	//
@@ -51,6 +53,10 @@ struct Reaction {
 	};
 };
 
+struct Reaction {
+	int count; 
+	Command * commands;
+};
 
 struct CfgSendEvent {
 	std::string name;
@@ -58,11 +64,22 @@ struct CfgSendEvent {
 	int notecc; // note or CC/PC number
 };
 
-struct CfgMapping {
+#define CMD_TEMPO "!TEMPO"
+#define CMD_STOP "!STOP"
+#define CMD_CHANNEL "!CHANNEL"
+#define CMD_TAPTEMPO "!TAPTEMPO"
+
+struct CfgCommand {
+	ReactType command;
 	std::string loopname;
 	int argument1; // right now, this can be channel or tempo 
+};
+ 
+struct CfgMappings {
 	MIDI::EventType type; // type of event to react
 	int notecc; // note or CC/PC number
+
+	std::vector<CfgCommand> commands;
 };
 
 struct CfgLoop {
@@ -76,6 +93,6 @@ struct Configuration {
 	int tempo;
 	int channel;
 	std::vector<CfgSendEvent> events;
-	std::vector<CfgMapping> mapping;
+	std::vector<CfgMappings> mapping;
 	std::vector<CfgLoop> loops;
 };

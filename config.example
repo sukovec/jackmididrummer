@@ -17,22 +17,32 @@ TEMPO 120
 KICK is note 36 # C3
 SR is note 38 # D3
 HH is note 42 # E3
+HO is note 46 # E3
+
+T1 is note 48 # highest tom
+T2 is note 47
+T3 is note 45
+T4 is note 41 # floor 
+
 
 # loops
 # TODO: rewrite these numbers to something more sensible
 BUMC = 1 4 | KICK HH | HH | SR HH | HH | 
-DNB  = 1 8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SR | HH | 
-NEVIM = 1 8 | HH KICK | HH | HH SR | HH KICK | HH | HH KICK | HH SR | HH | 
-
+DNB  = 4 8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SR | HH | 
+PRECHOD1 = 1 16 | T4 | | T4 | | T3 | | T3 | T2 | T2 | T1 | T1 | SR | SR | SR | SR | 
+PRECHOD2 = 1 16 | KICK HO | | SR HO | | T4 | T4 | T3 | T3 | T2 | T2 | T1 | T1 | SR | SR | SR | SR | 
+PUNK = 1 16 | KICK HO | | SR HO | KICK | HO | KICK | SR HO | |
 
 # mapping of starting
 
-PC 1 : BUMC
-PC 2 : NEVIM
-PC 3 : DNB
+PC 1 : !TEMPO 70 PUNK
+PC 2 : !TEMPO 140 PUNK
+PC 3 : !TEMPO 100 BUMC
+PC 4 : !TEMPO 200 BUMC
+PC 5 : !TEMPO 400 BUMC
+PC 6 : !TEMPO 800 BUMC
 
-
-PC 5 : 
-PC 6 :
-PC 7 :
-PC 8 :
+# meta-reaction:
+# !STOP
+# !TEMPO xx
+# !CHANNEL n

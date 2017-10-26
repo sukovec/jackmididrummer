@@ -14,8 +14,9 @@ void Config::Open(const char * fname) {
 	std::ifstream file(fname); // open file for reading
 
 	std::string line;
-
+	this->cline = 0;
 	while (std::getline(file, line)) {
+		this->cline++;
 		if (line[0] == '#' || line.empty())
 			continue;
 
@@ -102,21 +103,37 @@ void Config::ProcessMapping(std::vector<std::string> tokens) {
 	log("Config::ProcessMapping()");
 
 	// proces mapping in form
-	// MESSAGETYPE NUMBER : REACTION
+	// MESSAGETYPE NUMBER : REACTION1 REACTION2 REACTION3
 	// CC 25 : DRUMLOOP
 	// CC 26 : !TEMPO 66
+	// PC 88 : DRUMLOOP !TEMPO 88
 
-	CfgMapping map;
-
-
-	map.loopname = tokens[3];
+	CfgMappings map;
 	map.type = this->StrToEventType(tokens[0]);
 	map.notecc = std::stoi(tokens[1]);
 
-	if (tokens.size() == 5) {
-		map.argument1 = std::stoi(tokens[4]);
+	for (int i = 3; i < tokens.size(); ) {
+		if (tokens[i].at(0) != '!') { // it is not a change loop comand
+			map.commands.push_back({ ReactType::ChangeLoop, tokens[i], 0 });
+			i++;
+		} else if (tokens[i].compare(CMD_TEMPO) == 0)   {
+			map.commands.push_back({ ReactType::ChangeTempo, std::string(), std::stoi(tokens[i+1]) });
+			i += 2;
+		} else if (tokens[i].compare(CMD_CHANNEL) == 0) {
+			map.commands.push_back({ ReactType::ChangeTempo, std::string(), std::stoi(tokens[i+1]) });
+			i += 2;
+		} else if (tokens[i].compare(CMD_TAPTEMPO) == 0) {
+			map.commands.push_back({ ReactType::TapTempo, std::string(), 0});
+			i++;
+		} else if (tokens[i].compare(CMD_STOP) == 0) {
+			map.commands.push_back({ ReactType::StopDrumming, std::string(), 0});
+			i++;
+		} else {
+			printf("Error while processing line %d\n", this->cline);
+			throw std::invalid_argument("Unknown command");
+		}
 	}
-
+	
 	this->mappings.push_back(map);
 }
 
@@ -129,7 +146,8 @@ MIDI::EventType Config::StrToEventType(std::string str) {
 	else if (str.compare("cc") == 0)
 		return MIDI::EventType::ControlChange;
 
-	throw new std::invalid_argument("Invalid argument (must be 'note', 'pc' or 'cc')");
+	printf("Error while processing line %d\n", this->cline);
+	throw std::invalid_argument("Invalid argument (must be 'note', 'pc' or 'cc')");
 }
 
 Configuration Config::GetConfiguration() {

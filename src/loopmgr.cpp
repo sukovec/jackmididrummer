@@ -21,7 +21,7 @@ void LoopManager::Initialize(std::vector<CfgLoop> & loops, NoteMap & map) {
 
 loopref_t LoopManager::GetLoopMapping(std::string loopname) {
 	if (this->loopmap.count(loopname) == 0) { // key doesn't exists
-		log("Getting the loop %s", loopname.c_str());
+		printf("Error while resolving loop '%s'", loopname.c_str());
 		throw std::invalid_argument("Loop doesn't exists");
 	}
 

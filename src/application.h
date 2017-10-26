@@ -29,6 +29,7 @@ class Application {
 		void Close();
 
 	private:
+		void DoCommand(Command & cmd);
 		void JackerCallback(MIDI::Message msg);
 
 	private:
