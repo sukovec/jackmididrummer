@@ -74,6 +74,8 @@ void Drummer::Drum(Jacker * jack) {
 		this->curpos -= splperbeat * (cbeat);
 		cbeat = 0;
 		this->Proceed();
+
+		if (!this->drumming) return; 
 	}
 
 //	log("div: %d, splpb: %d, cbeat: %d, now: %d", div, splperbeat, cbeat, now);
