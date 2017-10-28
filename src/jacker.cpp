@@ -30,10 +30,10 @@ Jacker::~Jacker() {
 		this->Close();
 }
 
-void Jacker::Open() {
+void Jacker::Open(const char * clname) {
 	log("Jacker::Open()");
 	jack_status_t status;
-	this->jackcl = jack_client_open("amd", JackNullOption, &status, nullptr);
+	this->jackcl = jack_client_open(clname, JackNullOption, &status, nullptr);
 
 	if (this->jackcl == nullptr) 
 		throw std::invalid_argument("Cannot initialize jack interface");
@@ -51,14 +51,6 @@ void Jacker::Open() {
 	printf("Jack info: buffersize = %d, samplerate = %d\n", this->buffersize, this->samplerate);
 
 	this->CreatePorts();
-
-	if (jack_activate(this->jackcl) != 0) {
-		throw std::runtime_error("Cannot activate jack client");
-	}
-
-	log("Jacker::CreatePorts: Running!");
-
-	this->ConnectPorts();
 }
 
 void Jacker::Close() {
@@ -72,6 +64,11 @@ void Jacker::Close() {
 
 void Jacker::Run() {
 	log("Jacker::Run()");
+	if (jack_activate(this->jackcl) != 0) {
+		throw std::runtime_error("Cannot activate jack client");
+	}
+
+	printf("Jack client activated\n");
 }
 
 int Jacker::Process(jack_nframes_t nframes) {
@@ -160,34 +157,27 @@ void Jacker::CreatePorts() {
 
 }
 
-// omg, remove this asap!
-#ifdef DEBUG
-#include <string.h>
-#endif
+void Jacker::ConnectPorts(const char * portname, JackPortType type) {
+	printf("Connecting %s ports matching '%s'\n", type == JackPortType::Input ? "input" : "output", portname);
+	const char ** ports = jack_get_ports(this->jackcl, portname, "midi", type == JackPortType::Input ? JackPortIsOutput : JackPortIsInput);
 
-void Jacker::ConnectPorts() {
-#ifdef DEBUG
-	printf("List ports");
-	const char **ports;
-	ports = jack_get_ports(this->jackcl, nullptr, "midi", JackPortIsOutput);
-
-	int index = -1;
-	for (int i = 0; ports[i] != nullptr; i++) {
-		printf("Port: %s\n", ports[i]);
-
-		if (index == -1) index = i; 
-		if (strstr(ports[i], "Fast Track") != nullptr)
-			index = i;
+	if (ports == nullptr) {
+		printf("\tSearching for port '%s' has \033[31mfailed\033[0m\n", portname);
+		return;
 	}
 
-	int ret = 666;
-	if (index != -1) {
-		log("jack_connect(client, %s, %s)", ports[index], jack_port_name(this->input));
-		ret = jack_connect(this->jackcl, ports[index], jack_port_name (this->input));
-		log("Jacker::CreatePorts: Connecting port to input %s (ret = %d)", ret == 0 ? "was successfull" : "failed", ret);
+	int ret;
+	if (type == JackPortType::Input) {
+		for (int i = 0; ports[i] != nullptr; i++) {
+			ret = jack_connect(this->jackcl, ports[i], jack_port_name(this->input));
+			printf("\tConnecting input '%s' -> '%s' %s\n", ports[i], jack_port_name(this->input), ret == 0 ? "was successfull" : "\033[31mfailed\033[0m");
+		}
+	} else {
+		for (int i = 0; ports[i] != nullptr; i++) {
+			ret = jack_connect(this->jackcl, jack_port_name(this->output), ports[i]);
+			printf("\tConnecting output '%s' -> '%s' %s\n", jack_port_name(this->output), ports[i], ret == 0 ? "was successfull" : "\033[31mfailed\033[0m");
+		}
 	}
 
-	ret += jack_connect(this->jackcl, jack_port_name (this->output), "DrumGizmo:drumgizmo_midiin");
 	jack_free(ports);
-#endif
 }

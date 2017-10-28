@@ -6,6 +6,7 @@
 namespace MIDI {
 	enum class EventType : unsigned char{ // should be called MessageType
 		NoteOn = 0b1001,
+		NoteOff = 0b1000,
 		ProgramChange = 0b1100,
 		ControlChange = 0b1011, 
 		Unknown = 0b11111111
@@ -95,4 +96,7 @@ struct Configuration {
 	std::vector<CfgSendEvent> events;
 	std::vector<CfgMappings> mapping;
 	std::vector<CfgLoop> loops;
+	std::vector<std::string> inputs;
+	std::vector<std::string> outputs;
+	std::string jackclname;
 };

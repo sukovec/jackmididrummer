@@ -26,13 +26,18 @@ class Config {
 		void ProcessMapping(std::vector<std::string> tokens);
 		void SetChannel(std::vector<std::string> tokens);
 		void SetTempo(std::vector<std::string> tokens);
-		ReactType GetCommandType(std::string cmd, int & retargs);
+		void SetJackClientName(std::vector<std::string> tokens);
+		void SetIO(std::string type, std::string line);
 
 		MIDI::EventType StrToEventType(std::string str);
 
+		// TODO: Make it into a struct
 		std::vector<CfgSendEvent> sendevts;
 		std::vector<CfgMappings> mappings;
 		std::vector<CfgLoop> loops;
+		std::vector<std::string> inputs;
+		std::vector<std::string> outputs;
+		std::string jackclname;
 
 		/// members
 		int cline;

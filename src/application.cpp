@@ -26,7 +26,7 @@ void Application::Run(int argc, char ** argv) {
 	this->reactions.Stats();
 
 	// try to connect/create to jack server
-	this->jack.Open();
+	this->jack.Open(cfg.jackclname.c_str());
 	
 	// initialize drumming class
 	this->drummer.Initialize(loops, map);
@@ -37,6 +37,12 @@ void Application::Run(int argc, char ** argv) {
 	this->jack.SetCallback(Delegate<void, MIDI::Message>::from_function<Application, &Application::JackerCallback>(this));
 	this->jack.SetGenerator(Delegate<void, Jacker *>::from_function<Drummer, &Drummer::Drum>(&this->drummer));
 	this->jack.Run();
+
+	for (int i = 0; i < cfg.inputs.size(); i++)
+		this->jack.ConnectPorts(cfg.inputs[i].c_str(), JackPortType::Input);
+
+	for (int i = 0; i < cfg.outputs.size(); i++)
+		this->jack.ConnectPorts(cfg.outputs[i].c_str(), JackPortType::Output);
 
 	sleep(-1);
 

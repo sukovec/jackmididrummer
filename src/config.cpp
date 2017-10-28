@@ -19,16 +19,22 @@ void Config::Open(const char * fname) {
 		this->cline++;
 		if (line[0] == '#' || line.empty())
 			continue;
+		log("Processing line %d", this->cline);
 
 		std::stringstream ss(line);
 		std::istream_iterator<std::string> begin(ss);
 		std::istream_iterator<std::string> end;
 		std::vector<std::string> tokens(begin, end);
 
+		// TODO: Check token count
 		if (tokens[0].compare("TEMPO") == 0) {
 			this->SetTempo(tokens);
 		} else if (tokens[0].compare("CHANNEL") == 0) {
 			this->SetChannel(tokens);
+		} else if (tokens[0].compare("INPUT") == 0 || tokens[0].compare("OUTPUT") == 0) {
+			this->SetIO(tokens[0], line);
+		} else if (tokens[0].compare("CLIENT") == 0) {
+			this->jackclname = tokens[1];
 		} else if (tokens[1].compare("is") == 0) {
 			this->ProcessNote(tokens);
 		} else if (tokens[1].compare("=") == 0) {
@@ -37,6 +43,20 @@ void Config::Open(const char * fname) {
 			this->ProcessMapping(tokens);
 		}
 	}
+}
+
+void Config::SetJackClientName(std::vector<std::string> tokens) {
+	log("Config::SetJackClientName()");
+	this->jackclname = tokens[1];
+}
+void Config::SetIO(std::string type, std::string line) {
+	std::vector<std::string> * vc;
+	if (type.compare("INPUT") == 0)
+		vc = &this->inputs;
+	else if (type.compare("OUTPUT") == 0)
+		vc = &this->outputs;
+
+	vc->push_back(line.substr(type.length() + 1));
 }
 
 void Config::SetChannel(std::vector<std::string> tokens) {
@@ -159,6 +179,11 @@ Configuration Config::GetConfiguration() {
 
 	ret.channel = this->channel;
 	ret.tempo = this->tempo;
+
+	ret.inputs = this->inputs;
+	ret.outputs = this->outputs;
+
+	ret.jackclname = this->jackclname;
 
 	return ret;
 }

@@ -35,6 +35,7 @@ namespace MIDI {
 				break;
 
 			case (unsigned char)EventType::NoteOn:
+			case (unsigned char)EventType::NoteOff:
 				if (size != 3) return Message(EventType::Unknown, 255, 0, 0);
 
 				ret.velocity = buf[2];
@@ -77,6 +78,9 @@ namespace MIDI {
 				break;
 			case EventType::NoteOn:
 				printf("MIDI channel: %d NoteOn %d velocity %d\n", this->channel, this->notecc, this->velocity);
+				break;
+			case EventType::NoteOff:
+				printf("MIDI channel: %d NoteOff %d velocity %d\n", this->channel, this->notecc, this->velocity);
 				break;
 			case EventType::ProgramChange:
 				printf("MIDI channel: %d ProgramChange %d\n", this->channel, this->notecc);

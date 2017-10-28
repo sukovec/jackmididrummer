@@ -11,11 +11,15 @@
 class Jacker;
 extern Jacker * c_jacker;
 
+enum class JackPortType {
+	Input, Output
+};
+
 class Jacker { 
 	public:
 	       	Jacker();
 		~Jacker();
-		void Open();
+		void Open(const char * clname);
 		void Close();
 		void Run();
 
@@ -28,11 +32,12 @@ class Jacker {
 
 		void SendMessage(MIDI::Message msg, int time);
 
+		void ConnectPorts(const char * portname, JackPortType type);
+
 		int GetBufferSize();
 		int GetSampleRate();
 	private:
 		void CreatePorts();
-		void ConnectPorts();
 		void ProcessMessage(jack_midi_event_t & evt);
 
 
