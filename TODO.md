@@ -1,9 +1,9 @@
 Must have
 ===
 * tap tempo
+** Half-implemented, need improvement!
 * configurable phrase repeating
 * fill-out/fill-in
-* configurable JACK connections
 
 Nice to have: 
 ===

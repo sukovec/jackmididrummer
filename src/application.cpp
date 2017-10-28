@@ -34,8 +34,8 @@ void Application::Run(int argc, char ** argv) {
 	this->drummer.SetEmitChannel(cfg.channel);
 	this->drummer.UpdateParams(this->jack.GetSampleRate(), this->jack.GetBufferSize());
 
-	this->jack.SetCallback(Delegate<void, MIDI::Message>::from_function<Application, &Application::JackerCallback>(this));
-	this->jack.SetGenerator(Delegate<void, Jacker *>::from_function<Drummer, &Drummer::Drum>(&this->drummer));
+	this->jack.SetCallback(MessageCallback::from_function<Application, &Application::JackerCallback>(this));
+	this->jack.SetGenerator(GeneratorCallback::from_function<Drummer, &Drummer::Drum>(&this->drummer));
 	this->jack.Run();
 
 	for (int i = 0; i < cfg.inputs.size(); i++)
@@ -54,7 +54,7 @@ void Application::Close() {
 	this->jack.Close();
 }
 
-void Application::DoCommand(Command & cmd) {
+void Application::DoCommand(Command & cmd, jack_nframes_t time) {
 	switch(cmd.command) {
 		case ReactType::ChangeLoop:
 			this->drummer.ChangeLoop(cmd.chloop);
@@ -68,10 +68,13 @@ void Application::DoCommand(Command & cmd) {
 		case ReactType::StopDrumming:
 			this->drummer.StopDrumming();
 			break;
+		case ReactType::TapTempo:
+			this->drummer.TapTempo(time);
+			break;
 	}
 }
 
-void Application::JackerCallback(MIDI::Message msg) {
+void Application::JackerCallback(MIDI::Message msg, jack_nframes_t time) {
 	Reaction react = this->reactions.GetReaction(msg);
 	if (react.count == 0) {
 		printf("Received unmapped MIDI message: ");
@@ -80,6 +83,6 @@ void Application::JackerCallback(MIDI::Message msg) {
 	}
 
 	for (int i = 0; i < react.count; i++) {
-		this->DoCommand(react.commands[i]);
+		this->DoCommand(react.commands[i], time);
 	}
 }

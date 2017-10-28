@@ -29,8 +29,8 @@ class Application {
 		void Close();
 
 	private:
-		void DoCommand(Command & cmd);
-		void JackerCallback(MIDI::Message msg);
+		void DoCommand(Command & cmd, jack_nframes_t time);
+		void JackerCallback(MIDI::Message msg, jack_nframes_t time);
 
 	private:
 		Config cfg;

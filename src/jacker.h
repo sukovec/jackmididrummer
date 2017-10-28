@@ -15,6 +15,10 @@ enum class JackPortType {
 	Input, Output
 };
 
+// TYPES:
+typedef Delegate<void, MIDI::Message, jack_nframes_t> MessageCallback;
+typedef Delegate<void, Jacker *> GeneratorCallback;
+
 class Jacker { 
 	public:
 	       	Jacker();
@@ -27,8 +31,8 @@ class Jacker {
 		int Process(jack_nframes_t nframes);
 		void Shutdown();
 		int BufferSizeChanged(jack_nframes_t size);
-		void SetCallback(Delegate<void, MIDI::Message> callback);
-		void SetGenerator(Delegate<void, Jacker *> callback);
+		void SetCallback(MessageCallback callback);
+		void SetGenerator(GeneratorCallback callback);
 
 		void SendMessage(MIDI::Message msg, int time);
 
@@ -51,7 +55,7 @@ class Jacker {
 
 		void * outbuffer;
 
-		Delegate<void, MIDI::Message> msgcallback;
-		Delegate<void, Jacker *> generatorcallback;
+		MessageCallback msgcallback;
+		GeneratorCallback generatorcallback;
 	
 };

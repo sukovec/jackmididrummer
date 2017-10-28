@@ -96,11 +96,11 @@ int Jacker::Process(jack_nframes_t nframes) {
 
 void Jacker::ProcessMessage(jack_midi_event_t & evt) {
 	MIDI::Message msg = MIDI::Message::FromBuffer(evt.buffer, evt.size);
-	if (msg.IsValid()) { // Can I definitely ignore time member in evt?
-		log("Received valid message");
-
+	if (msg.IsValid()) { // Can I definitely ignore time member in evt? ... no, I cannot :(
 		if (this->msgcallback.IsSet())
-			this->msgcallback(msg);
+			this->msgcallback(msg, evt.time);
+	} else {
+		log("Received invalid/unknown message");
 	}
 }
 
@@ -113,12 +113,12 @@ int Jacker::BufferSizeChanged(jack_nframes_t size) {
 	this->buffersize = size;
 }
 
-void Jacker::SetCallback(Delegate<void, MIDI::Message> callback) {
+void Jacker::SetCallback(MessageCallback callback) {
 	log("Jacker::SetCallback()");
 	this->msgcallback = callback;
 }
 
-void Jacker::SetGenerator(Delegate<void, Jacker *> callback) { 
+void Jacker::SetGenerator(GeneratorCallback callback) { 
 	log("Jacker::SetGenerator()");
 	
 	this->generatorcallback = callback;

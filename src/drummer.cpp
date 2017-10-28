@@ -5,6 +5,7 @@ Drummer::Drummer() {
 	this->drumming = false;
 	this->next = nullptr;
 	this->current = nullptr;
+	this->counttempo = false;
 }
 
 Drummer::~Drummer() {
@@ -40,6 +41,30 @@ void Drummer::SetTempo(int tempo) {
 	this->nexttempo = tempo;
 }
 
+void Drummer::TapTempo(jack_nframes_t time) {
+	log("Drummer::TapTempo(%d)", time);
+
+	if (!this->counttempo) {
+		this->ttfirstclick = this->ttsamples + time;
+		this->ttlastclick = 0;
+		this->ttclicks = 0;
+		this->counttempo = true;
+	} else {
+		this->ttclicks++;
+		this->ttlastclick = this->ttsamples + time;
+
+		int tmp = (this->splrate * 6000) / ((this->ttlastclick - this->ttfirstclick) / ttclicks);
+		this->curtempo = tmp / 100;
+		this->nexttempo = this->curtempo;
+		log("Tap tempo: samples: %d, first: %d, last: %d, clicks: %d, tmp: %d", this->ttsamples, this->ttfirstclick, this->ttlastclick, this->ttclicks, tmp);
+
+		if (this->ttclicks == 5) {
+			log("Tempo tapped...");
+			this->counttempo = false;
+		}
+	}
+}
+
 void Drummer::StartDrumming() {
 	log("Drummer::StartDrumming()");
 
@@ -62,6 +87,8 @@ void Drummer::UpdateParams(int splrate, int buffersize) {
 }
 
 void Drummer::Drum(Jacker * jack) {
+	this->ttsamples += this->buffersize;
+
 	if (!this->drumming) return;
 
 	int div = this->current->GetBarBeats();

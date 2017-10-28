@@ -17,6 +17,7 @@ class Drummer {
 		void StopDrumming();
 		void StartDrumming();
 		void UpdateParams(int splrate, int buffersize);
+		void TapTempo(jack_nframes_t time);
 
 		void Drum(Jacker * jack);
 	private:
@@ -39,4 +40,11 @@ class Drummer {
 		bool drumming;
 
 		int curpos;
+
+		// tap tempo vars:
+		bool counttempo;
+		int ttsamples;
+		int ttlastclick;
+		int ttfirstclick;
+		int ttclicks;
 };
