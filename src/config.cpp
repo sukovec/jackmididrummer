@@ -144,6 +144,7 @@ void Config::ProcessNote(std::vector<std::string> tokens) {
 	sev.name = tokens[0];
 	sev.type = this->StrToEventType(tokens[2]);
 	sev.notecc = std::stoi(tokens[3]);
+	sev.velocity = DEFAULT_VELOCITY;
 
 	for (int i = 4; i < tokens.size(); i++) {
 		if (tokens[i].compare("OUTPUT") == 0 && tokens.size() > i + 1) {
@@ -164,8 +165,18 @@ void Config::ProcessNote(std::vector<std::string> tokens) {
 void Config::ProcessLoop(std::vector<std::string> tokens) {
 	log("Config::ProcessLoop()");
 
+	if (tokens[2].at(0) == '!') 
+		this->ProcessMultiloop(tokens);
+	else 
+		this->ProcessLoopNormal(tokens);
+}
+
+void Config::ProcessLoopNormal(std::vector<std::string> tokens) {
+	log("Config::ProcessLoopNormal()");
+
 	CfgLoop loop;
 	loop.name = tokens[0]; 
+	loop.type = CfgLoopType::Normal;
 	loop.barbeats = std::stoi(tokens[2]);
 	loop.bars = std::stoi(tokens[3]);
 	
@@ -186,6 +197,35 @@ void Config::ProcessLoop(std::vector<std::string> tokens) {
 		}
 
 		i++;
+	}
+
+	this->loops.push_back(loop);
+}
+
+void Config::ProcessMultiloop(std::vector<std::string> tokens) {
+	log("Config::ProcessMultiloop()");
+
+	CfgLoop loop;
+	loop.name = tokens[0]; 
+	// token[1] = "="
+	// token[2] = "!MERGE"
+	// token[3..n] = loopname
+	
+	if (tokens[2].compare("!MERGE") == 0)
+		loop.type = CfgLoopType::Merge;
+	else if (tokens[2].compare("!SEQUENCE") == 0)
+		loop.type = CfgLoopType::Sequence;
+	else 
+		this->ThrowError("Unknown directive");
+
+	loop.beats.push_back(std::vector<std::string>());
+	
+	std::vector<std::string> & tomerge = loop.beats[0];
+
+	for (int i = 3; i < tokens.size(); i++) {
+		if (tokens[i].at(0) == '#') break;
+
+		tomerge.push_back(tokens[i]);
 	}
 
 	this->loops.push_back(loop);

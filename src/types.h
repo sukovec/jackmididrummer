@@ -4,6 +4,7 @@
 #include <string>
 
 #define DEFAULT_OUTPUT 0 // in index 0, i need to have default output all the time
+#define DEFAULT_VELOCITY 127
 
 namespace MIDI {
 	enum class EventType : unsigned char{ // should be called MessageType
@@ -104,11 +105,17 @@ struct CfgMappings {
 	std::vector<CfgCommand> commands;
 };
 
+enum class CfgLoopType { Normal, Merge, Sequence } ;
+
 struct CfgLoop {
 	std::string name;
+	CfgLoopType type;
+
 	int barbeats;
 	int bars;
-	std::vector<std::vector<std::string>> beats; // a beat contains vector of notes
+	std::vector<std::vector<std::string>> beats; 	// a beat contains vector of notes
+							// when a multiloop or merge, then loops should go to 
+							// first "beat"
 };
 
 struct CfgOutputConnection {

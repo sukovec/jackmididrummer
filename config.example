@@ -21,7 +21,7 @@ DEFAULT OUTPUT out
 # make jack connections, it lookups port with use of function jack_get_ports "syntax" (regexp): http://jackaudio.org/files/docs/html/group__PortSearching.html#gac8fc8e1745642cc983b1562ad43f99b1
 CONNECT INPUT nanoPAD2
 CONNECT INPUT Fast Track Ultra 8R
-CONNECT OUTPUT drumgizmo_midiin
+CONNECT OUTPUT Drums/midi_in 1
 
 CONNECT OUTPUT control > Fast Track Ultra 8R
 
@@ -39,6 +39,8 @@ KICK is note 36 # C3
 SR is note 38 # D3
 HH is note 42 # E3
 HO is note 46 # E3
+CL is note 49 # Crash Left
+CR is note 57 # Crash Right
 
 T1 is note 48 # highest tom
 T2 is note 47
@@ -46,29 +48,37 @@ T3 is note 45
 T4 is note 41 # floor 
 
 # notes can be directed to some specific output
-SYNC is CC 64 > control
+TAPFF is CC 64 OUTPUT control VELOCITY 127
+TAP00 is CC 64 OUTPUT control VELOCITY 0
 
 
 # loops
 # TODO: rewrite these numbers to something more sensible
-BUMC = 1 4 | SYNC KICK HH | SYNC HH | SYNC SR HH | SYNC HH | 
-DNB  = 4 8 | SYNC HH KICK | HH | HH SR | HH | HH | HH KICK | HH SR | HH | 
-PRECHOD1 = 1 16 | SYNC T4 | | T4 | | T3 | | T3 | T2 | T2 | T1 | T1 | SR | SR | SR | SR | 
-PRECHOD2 = 1 16 | SYNC KICK HO | | SR HO | | T4 | T4 | T3 | T3 | T2 | T2 | T1 | T1 | SR | SR | SR | SR | 
-PUNK = 1 16 | SYNC KICK HO | | SR HO | KICK | HO | KICK | SR HO | |
+BC = 1 4 | KICK HH | HH | SR HH | HH | 
+DNB  = 4 8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SR | HH | 
+PRECHOD1 = 1 16 | T4 | | T4 | | T3 | | T3 | T2 | T2 | T1 | T1 | SR | SR | SR | SR | 
+PRECHOD2 = 1 16 | KICK HO | | SR HO | | T4 | T4 | T3 | T3 | T2 | T2 | T1 | T1 | SR | SR | SR | SR | 
+PUNK = 1 16 | KICK HO | | SR HO | KICK | HO | KICK | SR HO | |
 
-SYNCER = 1 4 | SYNC | | | |
+SYNCER = 1 8 | TAPFF | TAP00 | TAPFF | TAP00 |
+
+KICKER = 1 2 | KICK | KICK |
+HHER = 1 8 | HH | HH | HH | HH | HH | HH | HH | HH |
+SNRER = 1 4 | | SR | | SR |
+CRASHER = 1 1 | CL |
+
+# this should merge two
+BUMC = !MERGE KICKER HHER SNRER SYNCER
+BUMC2 = !SEQUENCE BUMC BUMC BUMC BUMC
+
+BUMCVACHT = !MERGE BUMC BUMC2 CRASHER
 
 # mapping of starting
 
+
 PC 1 : !TEMPO 70 PUNK
 PC 2 : !TEMPO 140 PUNK
-PC 3 : !TEMPO 100 BUMC
-PC 4 : !TEMPO 200 BUMC
-PC 5 : !TEMPO 400 BUMC
-PC 6 : !TEMPO 800 BUMC
-note 37 : !TAPTEMPO
-note 36 : BUMC
+note 36 : BUMCVACHT
 note 50 : SYNCER
 
 # meta-reaction:

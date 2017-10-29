@@ -113,9 +113,6 @@ void Drummer::Drum(Jacker * jack) {
 			const SendEvent c = (*this->notes)[b->notes[i]];
 			log("Sending %d: %d v%d", b->notes[i], c.notecc, c.velocity);
 			jack->SendMessage(MIDI::Message(c.type, this->curchannel, c.notecc, c.velocity), now, c.output);
-
-			/*if (c.notecc == 64)
-				jack->SendMessage(MIDI::Message(c.type, this->curchannel, c.notecc, 0), now, c.output);*/
 		}
 	}
 

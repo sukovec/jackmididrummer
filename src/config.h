@@ -23,6 +23,8 @@ class Config {
 	private:
 		void ProcessNote(std::vector<std::string> tokens);
 		void ProcessLoop(std::vector<std::string> tokens);
+		void ProcessLoopNormal(std::vector<std::string> tokens);
+		void ProcessMultiloop(std::vector<std::string> tokens);
 		void ProcessMapping(std::vector<std::string> tokens);
 		void SetChannel(std::vector<std::string> tokens);
 		void SetTempo(std::vector<std::string> tokens);
