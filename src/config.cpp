@@ -145,14 +145,16 @@ void Config::ProcessNote(std::vector<std::string> tokens) {
 	sev.type = this->StrToEventType(tokens[2]);
 	sev.notecc = std::stoi(tokens[3]);
 
-	if (tokens.size() == 6) {
-		if (tokens[4].compare(">") == 0)
-			sev.output = tokens[5];
-		else if (tokens[4].at(0) == '#') {// its just a comment
-			// nop()
+	for (int i = 4; i < tokens.size(); i++) {
+		if (tokens[i].compare("OUTPUT") == 0 && tokens.size() > i + 1) {
+			sev.output = tokens[++i];
+		} else if (tokens[i].compare("VELOCITY") == 0) {
+			sev.velocity = std::stoi(tokens[++i]);
+		} else if (tokens[i].at(0) == '#') {
+			break;
+		} else {
+			this->ThrowError("Unknown token");
 		}
-		else 
-			this->ThrowError("Incorrect syntax");
 	}
 
 	this->sendevts.push_back(sev);

@@ -67,19 +67,22 @@ struct CfgSendEvent {
 	std::string output;
 	MIDI::EventType type; // type of event to send
 	int notecc; // note or CC/PC number
+	int velocity;
 };
 
 struct SendEvent {
 	MIDI::EventType type;
 	int notecc;
 	int output;
+	int velocity;
 	/*int velocity;*/ // for future use, maybe?
 
 	SendEvent() {}
-	SendEvent(MIDI::EventType type, int notecc, int output = 0) {
+	SendEvent(MIDI::EventType type, int notecc, int velocity, int output = 0) {
 		this->type = type;
 		this->notecc = notecc;
 		this->output = output; 
+		this->velocity = velocity;
 	}
 };
 

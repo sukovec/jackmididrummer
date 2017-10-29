@@ -21,7 +21,7 @@ void NoteMap::Initialize(std::vector<CfgSendEvent> notes, OutputMap & map) {
 
 	// make notes mapping 
 	for (int i = 0; i < notes.size(); i++) {
-		this->evts[i] = SendEvent(notes[i].type, notes[i].notecc, map.GetOut(notes[i].output)); 
+		this->evts[i] = SendEvent(notes[i].type, notes[i].notecc, notes[i].velocity, map.GetOut(notes[i].output)); 
 		ret = this->nmap.insert(std::pair<std::string, int>(notes[i].name, i));
 
 		if (ret.second == false) {
