@@ -19,6 +19,7 @@
 #include "loopmgr.h"
 #include "reactmgr.h"
 #include "delegate.h"
+#include "outputmap.h"
 
 class Application {
 	public:
@@ -37,6 +38,7 @@ class Application {
 		Jacker jack;
 		Drummer drummer;
 
+		OutputMap outputs;
 		NoteMap map;
 		LoopManager loops;
 		ReactManager reactions;

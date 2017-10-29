@@ -20,7 +20,7 @@ namespace MIDI {
 
 		// status byte: xxxxCCCC: xxxx - type (cc 1011, pc 1100, 1001 note on), CCCC - channel
 		unsigned char type = (buf[0] & 0xF0) >> 4;
-		unsigned char chnl = buf[0] & 0x0F; 
+		unsigned char chnl = (buf[0] & 0x0F) + 1;
 
 		ret.evttype = (EventType)type;
 		switch(type) {
@@ -63,10 +63,10 @@ namespace MIDI {
 		}
 
 		unsigned char * buf = (unsigned char *)buffer;
-		buf[0] = (((unsigned char)this->evttype) & 0xF) << 4 | (this->channel & 0xF);
-		buf[1] = this->notecc & 0x3F;
+		buf[0] = (((unsigned char)this->evttype) & 0xF) << 4 | ((this->channel -1 ) & 0xF);
+		buf[1] = this->notecc & 0x7F;
 		if (sz == 3)
-			buf[2] = this->velocity;
+			buf[2] = this->velocity & 0x7F;
 
 		return sz;
 	}

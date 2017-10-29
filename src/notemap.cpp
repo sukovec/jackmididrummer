@@ -13,16 +13,16 @@ noteref_t NoteMap::GetNoteMapping(std::string note) {
 	return this->nmap[note];
 }
 
-void NoteMap::Initialize(std::vector<CfgSendEvent> notes) {
+void NoteMap::Initialize(std::vector<CfgSendEvent> notes, OutputMap & map) {
 	log("NoteMap::Initialize()");
-	this->evts = new CfgSendEvent[notes.size()];
+	this->evts = new SendEvent[notes.size()];
 
 	std::pair<std::map<std::string,int>::iterator,bool> ret;
 
 	// make notes mapping 
 	for (int i = 0; i < notes.size(); i++) {
-		this->evts[i] = notes[i];
-		ret = this->nmap.insert(std::pair<std::string, int>(this->evts[i].name, i));
+		this->evts[i] = SendEvent(notes[i].type, notes[i].notecc, map.GetOut(notes[i].output)); 
+		ret = this->nmap.insert(std::pair<std::string, int>(notes[i].name, i));
 
 		if (ret.second == false) {
 			throw std::invalid_argument("Two \"notes\" have the same name, which is sooo wrong");
@@ -30,7 +30,7 @@ void NoteMap::Initialize(std::vector<CfgSendEvent> notes) {
 	}
 }
 
-CfgSendEvent const & NoteMap::operator[] (noteref_t x) {
+SendEvent const & NoteMap::operator[] (noteref_t x) {
 	return this->evts[x];
 }
 

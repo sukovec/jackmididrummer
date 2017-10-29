@@ -23,7 +23,7 @@ class Jacker {
 	public:
 	       	Jacker();
 		~Jacker();
-		void Open(const char * clname);
+		void Open(const char * clname, const char ** outputs, int outputcount);
 		void Close();
 		void Run();
 
@@ -34,26 +34,27 @@ class Jacker {
 		void SetCallback(MessageCallback callback);
 		void SetGenerator(GeneratorCallback callback);
 
-		void SendMessage(MIDI::Message msg, int time);
+		void SendMessage(MIDI::Message msg, int time, outputref_t out);
 
-		void ConnectPorts(const char * portname, JackPortType type);
+		void ConnectPorts(const char * portname, JackPortType type, outputref_t out = 0);
 
 		int GetBufferSize();
 		int GetSampleRate();
 	private:
-		void CreatePorts();
+		void CreatePorts(const char ** outputs, int outputcount);
 		void ProcessMessage(jack_midi_event_t & evt);
 
 
 		jack_client_t * jackcl;
 
 		jack_port_t * input;
-		jack_port_t * output;
+		jack_port_t ** outputs;
 
 		jack_nframes_t samplerate;
 		jack_nframes_t buffersize;
 
-		void * outbuffer;
+		void ** outbuffer;
+		int outputcount;
 
 		MessageCallback msgcallback;
 		GeneratorCallback generatorcallback;

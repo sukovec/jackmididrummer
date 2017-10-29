@@ -14,9 +14,10 @@ void Application::Run(int argc, char ** argv) {
 
 	// load configuration...
 	Configuration cfg = this->cfg.GetConfiguration();
-
+	log("=================================================");
 	// make arrays from std::vector and create numeric mapping
-	this->map.Initialize(cfg.events);
+	this->outputs.Initialize(cfg.outputs);
+	this->map.Initialize(cfg.events, this->outputs);
 	this->loops.Initialize(cfg.loops, this->map);
 	this->reactions.Initialize(cfg.mapping, this->loops);
 
@@ -26,7 +27,9 @@ void Application::Run(int argc, char ** argv) {
 	this->reactions.Stats();
 
 	// try to connect/create to jack server
-	this->jack.Open(cfg.jackclname.c_str());
+	int outcnt;
+	const char ** outs = this->outputs.GetOutputList(outcnt);
+	this->jack.Open(cfg.jackclname.c_str(), outs, outcnt);
 	
 	// initialize drumming class
 	this->drummer.Initialize(loops, map);
@@ -38,12 +41,13 @@ void Application::Run(int argc, char ** argv) {
 	this->jack.SetGenerator(GeneratorCallback::from_function<Drummer, &Drummer::Drum>(&this->drummer));
 	this->jack.Run();
 
-	for (int i = 0; i < cfg.inputs.size(); i++)
-		this->jack.ConnectPorts(cfg.inputs[i].c_str(), JackPortType::Input);
+	for (int i = 0; i < cfg.inputconn.size(); i++)
+		this->jack.ConnectPorts(cfg.inputconn[i].c_str(), JackPortType::Input);
 
-	for (int i = 0; i < cfg.outputs.size(); i++)
-		this->jack.ConnectPorts(cfg.outputs[i].c_str(), JackPortType::Output);
 
+	for (int i = 0; i < cfg.outputconn.size(); i++)
+		this->jack.ConnectPorts(cfg.outputconn[i].connect.c_str(), JackPortType::Output, this->outputs.GetOut(cfg.outputconn[i].output));
+	
 	sleep(-1);
 
 	this->Close();

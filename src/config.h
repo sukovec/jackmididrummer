@@ -27,7 +27,11 @@ class Config {
 		void SetChannel(std::vector<std::string> tokens);
 		void SetTempo(std::vector<std::string> tokens);
 		void SetJackClientName(std::vector<std::string> tokens);
-		void SetIO(std::string type, std::string line);
+		void SetIO(std::vector<std::string> tokens, std::string line);
+		void CreateOutput(std::vector<std::string> tokens);
+		void SetDefault(std::vector<std::string> tokens);
+
+		void ThrowError(const char * err);
 
 		MIDI::EventType StrToEventType(std::string str);
 
@@ -35,9 +39,13 @@ class Config {
 		std::vector<CfgSendEvent> sendevts;
 		std::vector<CfgMappings> mappings;
 		std::vector<CfgLoop> loops;
-		std::vector<std::string> inputs;
+		std::vector<std::string> inputconn;
+		std::vector<CfgOutputConnection> outputconn;
 		std::vector<std::string> outputs;
+
 		std::string jackclname;
+		std::string defaultloop;
+		std::string defaultoutput;
 
 		/// members
 		int cline;

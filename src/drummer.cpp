@@ -110,8 +110,12 @@ void Drummer::Drum(Jacker * jack) {
 	if (now < this->buffersize) {
 		Beat * b = this->current->GetBeat(cbeat);
 		for (int i = 0; i < b->notecount; i++) {
-			const CfgSendEvent c = (*this->notes)[b->notes[i]];
-			jack->SendMessage(MIDI::Message(c.type, this->curchannel, c.notecc, 127), now);
+			const SendEvent c = (*this->notes)[b->notes[i]];
+			log("Sending %d: %d", b->notes[i], c.notecc);
+			jack->SendMessage(MIDI::Message(c.type, this->curchannel, c.notecc, 127), now, c.output);
+
+			if (c.notecc == 64)
+				jack->SendMessage(MIDI::Message(c.type, this->curchannel, c.notecc, 0), now, c.output);
 		}
 	}
 

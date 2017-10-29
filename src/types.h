@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 
+#define DEFAULT_OUTPUT 0 // in index 0, i need to have default output all the time
+
 namespace MIDI {
 	enum class EventType : unsigned char{ // should be called MessageType
 		NoteOn = 0b1001,
@@ -30,6 +32,7 @@ namespace MIDI {
 
 typedef int noteref_t;
 typedef int loopref_t;
+typedef int outputref_t;
 
 struct Beat {
 	int notecount;
@@ -61,8 +64,23 @@ struct Reaction {
 
 struct CfgSendEvent {
 	std::string name;
+	std::string output;
 	MIDI::EventType type; // type of event to send
 	int notecc; // note or CC/PC number
+};
+
+struct SendEvent {
+	MIDI::EventType type;
+	int notecc;
+	int output;
+	/*int velocity;*/ // for future use, maybe?
+
+	SendEvent() {}
+	SendEvent(MIDI::EventType type, int notecc, int output = 0) {
+		this->type = type;
+		this->notecc = notecc;
+		this->output = output; 
+	}
 };
 
 #define CMD_TEMPO "!TEMPO"
@@ -90,13 +108,24 @@ struct CfgLoop {
 	std::vector<std::vector<std::string>> beats; // a beat contains vector of notes
 };
 
+struct CfgOutputConnection {
+	std::string output;
+	std::string connect;
+
+	CfgOutputConnection(std::string out, std::string conn) { output = out; connect = conn; }
+};
+
 struct Configuration {
 	int tempo;
 	int channel;
 	std::vector<CfgSendEvent> events;
 	std::vector<CfgMappings> mapping;
 	std::vector<CfgLoop> loops;
-	std::vector<std::string> inputs;
 	std::vector<std::string> outputs;
+	std::vector<std::string> inputconn;
+	std::vector<CfgOutputConnection> outputconn;
+
 	std::string jackclname;
+	std::string defaultloop;
+	std::string defaultoutput;
 };

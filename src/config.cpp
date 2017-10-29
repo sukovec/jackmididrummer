@@ -19,7 +19,7 @@ void Config::Open(const char * fname) {
 		this->cline++;
 		if (line[0] == '#' || line.empty())
 			continue;
-		log("Processing line %d", this->cline);
+		log("Processing line %d ('%s')", this->cline, line.c_str());
 
 		std::stringstream ss(line);
 		std::istream_iterator<std::string> begin(ss);
@@ -27,14 +27,19 @@ void Config::Open(const char * fname) {
 		std::vector<std::string> tokens(begin, end);
 
 		// TODO: Check token count
+		// TODO: Use #defines for strings
 		if (tokens[0].compare("TEMPO") == 0) {
 			this->SetTempo(tokens);
 		} else if (tokens[0].compare("CHANNEL") == 0) {
 			this->SetChannel(tokens);
-		} else if (tokens[0].compare("INPUT") == 0 || tokens[0].compare("OUTPUT") == 0) {
-			this->SetIO(tokens[0], line);
+		} else if (tokens[0].compare("CONNECT") == 0) {
+			this->SetIO(tokens, line);
 		} else if (tokens[0].compare("CLIENT") == 0) {
 			this->jackclname = tokens[1];
+		} else if (tokens[0].compare("OUTPUT") == 0) {
+			this->CreateOutput(tokens);
+		} else if (tokens[0].compare("DEFAULT") == 0) {
+			this->SetDefault(tokens);
 		} else if (tokens[1].compare("is") == 0) {
 			this->ProcessNote(tokens);
 		} else if (tokens[1].compare("=") == 0) {
@@ -45,18 +50,72 @@ void Config::Open(const char * fname) {
 	}
 }
 
+void Config::CreateOutput(std::vector<std::string> tokens) {
+	log("Config::CreateOutput()");
+
+	if (tokens.size() == 2) {
+		this->outputs.push_back(tokens[1]);
+
+		if (this->defaultoutput.empty())
+			this->defaultoutput = tokens[1];
+	}
+	else {
+		this->ThrowError("Too few/too much arguments (should be 'OUTPUT outputname' - no spaces etc)");
+	}
+}
+
+void Config::SetDefault(std::vector<std::string> tokens) {
+	log("Config::SetDefault()");
+
+	if (tokens.size() < 3) {
+		this->ThrowError("Too few/too much arguments");
+	} else if (tokens[1].compare("OUTPUT") == 0) {
+
+	} else if (tokens[1].compare("LOOP") == 0) {
+		this->defaultloop = tokens[2];
+	} else {
+		this->ThrowError("Unknown directive (currently settable defaults are: OUTPUT, LOOP)");
+	}
+}
 void Config::SetJackClientName(std::vector<std::string> tokens) {
 	log("Config::SetJackClientName()");
 	this->jackclname = tokens[1];
 }
-void Config::SetIO(std::string type, std::string line) {
-	std::vector<std::string> * vc;
-	if (type.compare("INPUT") == 0)
-		vc = &this->inputs;
-	else if (type.compare("OUTPUT") == 0)
-		vc = &this->outputs;
 
-	vc->push_back(line.substr(type.length() + 1));
+void Config::SetIO(std::vector<std::string> tokens, std::string line) {
+	log("Config::SetIO()");
+	// three possibilities:
+	// CONNECT INPUT here is name of some jack output
+	// CONNECT OUTPUT here is name of some jack input
+	// CONNECT OUTPUT jmd_output > and here some jack input
+
+	if (tokens.size() <= 2) {
+		printf("When processing config line %d\n", this->cline);
+		throw std::invalid_argument("Too few arguments for CONNECT");
+	} 
+
+	if (tokens[1].compare("INPUT") == 0) {
+		this->inputconn.push_back(line.substr(tokens[0].length() + tokens[1].length() + 2));
+	} else if (tokens[1].compare("OUTPUT") == 0) {
+		int redirpos = -1;
+		for (int i = 2; i < tokens.size(); i++) {
+			if (tokens[i].compare(">") == 0) {
+				redirpos = i;
+				break;
+			}
+		}
+
+		if (redirpos == -1) {  // it's not tied to non-default output
+			this->outputconn.push_back(CfgOutputConnection("", line.substr(tokens[0].length() + tokens[1].length() + 2)));
+		} else {
+			this->outputconn.push_back(CfgOutputConnection(tokens[2], line.substr(tokens[0].length() + tokens[1].length() + tokens[2].length() + tokens[3].length() + 3)));
+		}
+
+	}
+	else {
+		printf("When processing config file line %d\n", this->cline);
+		throw std::invalid_argument("Wrong directive (expected INPUT or OUTPUT)");
+	}
 }
 
 void Config::SetChannel(std::vector<std::string> tokens) {
@@ -76,11 +135,25 @@ void Config::SetTempo(std::vector<std::string> tokens) {
 void Config::ProcessNote(std::vector<std::string> tokens) {
 	log("Config::ProcessNote()");
 
+	if (tokens.size() < 4) 
+		this->ThrowError("Too few or too much arguments for a send event");
+	
+
 	CfgSendEvent sev;
 
 	sev.name = tokens[0];
 	sev.type = this->StrToEventType(tokens[2]);
 	sev.notecc = std::stoi(tokens[3]);
+
+	if (tokens.size() == 6) {
+		if (tokens[4].compare(">") == 0)
+			sev.output = tokens[5];
+		else if (tokens[4].at(0) == '#') {// its just a comment
+			// nop()
+		}
+		else 
+			this->ThrowError("Incorrect syntax");
+	}
 
 	this->sendevts.push_back(sev);
 }
@@ -101,15 +174,12 @@ void Config::ProcessLoop(std::vector<std::string> tokens) {
 	std::vector<std::string> notes;
 	while (i < tokens.size()) {
 		if (tokens[i].compare("|") == 0) { // 
-			log("  found |");
 			loop.beats.push_back(notes);
 			notes.clear();
 		} else if (tokens[i].compare("!") == 0) { // this will mark some space for configuration flags of loop
-			log("  found !");
 			break;
 		}
 		else {
-			log("  found note");
 			notes.push_back(tokens[i]);
 		}
 
@@ -149,8 +219,7 @@ void Config::ProcessMapping(std::vector<std::string> tokens) {
 			map.commands.push_back({ ReactType::StopDrumming, std::string(), 0});
 			i++;
 		} else {
-			printf("Error while processing line %d\n", this->cline);
-			throw std::invalid_argument("Unknown command");
+			this->ThrowError("Unknown command");
 		}
 	}
 	
@@ -166,8 +235,7 @@ MIDI::EventType Config::StrToEventType(std::string str) {
 	else if (str.compare("cc") == 0)
 		return MIDI::EventType::ControlChange;
 
-	printf("Error while processing line %d\n", this->cline);
-	throw std::invalid_argument("Invalid argument (must be 'note', 'pc' or 'cc')");
+	this->ThrowError("Invalid midi message definition (must be 'note', 'pc', or 'cc')");
 }
 
 Configuration Config::GetConfiguration() {
@@ -180,34 +248,18 @@ Configuration Config::GetConfiguration() {
 	ret.channel = this->channel;
 	ret.tempo = this->tempo;
 
-	ret.inputs = this->inputs;
 	ret.outputs = this->outputs;
+	ret.inputconn = this->inputconn;
+	ret.outputconn = this->outputconn;
 
 	ret.jackclname = this->jackclname;
+	ret.defaultloop = this->defaultloop;
+	ret.defaultoutput = this->defaultoutput;
 
 	return ret;
 }
 
-/*
-# spaces between tokens are arbitrary ("MAP : PC 1" is OK, "MAP:PC 1" is not)
-# use only one space
-# everything is case sensitive except strings "note", "pc", "cc" in type
-
-# notes/sounds/outputs
-
-KICK is note 36 # C3
-SR is note 38 # D3
-HH is note 40 # E3
-
-# loops
-
-BUMC = 1x4 | KICK HH | HH | SR HH | HH | 
-DNB  = 1x8 | HH KICK | HH | HH SR | HH | HH | HH KICK | HH SNARE | HH | 
-
-# mapping of starting
-
-BUMC : PC 1
-BUMC : PC 2
-DNB : PC 3
-DNB : note 50
-*/
+void Config::ThrowError(const char * err) {
+	printf("While processing line %d\n", this->cline);
+	throw std::invalid_argument(err);
+}

@@ -30,7 +30,7 @@ Jacker::~Jacker() {
 		this->Close();
 }
 
-void Jacker::Open(const char * clname) {
+void Jacker::Open(const char * clname, const char ** outputs, int outputcount) {
 	log("Jacker::Open()");
 	jack_status_t status;
 	this->jackcl = jack_client_open(clname, JackNullOption, &status, nullptr);
@@ -50,7 +50,8 @@ void Jacker::Open(const char * clname) {
 
 	printf("Jack info: buffersize = %d, samplerate = %d\n", this->buffersize, this->samplerate);
 
-	this->CreatePorts();
+	this->outputcount = outputcount;
+	this->CreatePorts(outputs, outputcount);
 }
 
 void Jacker::Close() {
@@ -71,10 +72,13 @@ void Jacker::Run() {
 	printf("Jack client activated\n");
 }
 
+// TODO: maybe optimalize it?
 int Jacker::Process(jack_nframes_t nframes) {
 	void * in = jack_port_get_buffer (this->input, nframes);
-	this->outbuffer = jack_port_get_buffer (this->output, nframes);
-	jack_midi_clear_buffer(this->outbuffer);
+	for (int i = 0; i < this->outputcount; i++) {
+		this->outbuffer[i] = jack_port_get_buffer (this->outputs[i], nframes);
+		jack_midi_clear_buffer(this->outbuffer[i]);
+	}
 
 	jack_nframes_t cnt = jack_midi_get_event_count(in);
 
@@ -88,8 +92,6 @@ int Jacker::Process(jack_nframes_t nframes) {
 
 	if (this->generatorcallback.IsSet())
 		this->generatorcallback(this);
-
-	this->outbuffer = nullptr;
 
 	return 0;
 }
@@ -124,7 +126,7 @@ void Jacker::SetGenerator(GeneratorCallback callback) {
 	this->generatorcallback = callback;
 }
 
-void Jacker::SendMessage(MIDI::Message msg, int time) {
+void Jacker::SendMessage(MIDI::Message msg, int time, outputref_t out) {
 	int32_t buffer; // 4 bytes should be enough for notes or cc/pc
 	int dtsz = msg.Encode(&buffer, sizeof(buffer));
 	if (dtsz < 1) {
@@ -132,7 +134,7 @@ void Jacker::SendMessage(MIDI::Message msg, int time) {
 		return;
 	}
 
-	jack_midi_event_write(this->outbuffer, time, (jack_midi_data_t*)&buffer, (size_t)dtsz);
+	jack_midi_event_write(this->outbuffer[out], time, (jack_midi_data_t*)&buffer, (size_t)dtsz);
 }
 
 int Jacker::GetBufferSize() {
@@ -143,21 +145,29 @@ int Jacker::GetSampleRate() {
 	return this->samplerate;
 }
 
-void Jacker::CreatePorts() {
+void Jacker::CreatePorts(const char ** outputs, int outputcount) {
 	log("Jacker::CreatePorts()");
 
 	this->input = jack_port_register (this->jackcl, "input", JACK_DEFAULT_MIDI_TYPE , JackPortIsInput, 0);
-	this->output = jack_port_register (this->jackcl, "output", JACK_DEFAULT_MIDI_TYPE , JackPortIsOutput, 0);
+	if (this->input == nullptr) 
+		throw std::runtime_error("Creation of jack input port was unsuccessfull");
 
-	if (this->input == nullptr || this->output == nullptr) {
-		throw std::runtime_error("Creation of jack io ports was unsuccessfull");
+	this->outputs = new jack_port_t*[outputcount];
+	this->outbuffer = new void*[outputcount];
+	for (int i = 0; i < outputcount; i++) {
+		printf("Creating output %d: %s\n", i, outputs[i]);
+		this->outputs[i] = jack_port_register (this->jackcl, outputs[i], JACK_DEFAULT_MIDI_TYPE , JackPortIsOutput, 0);
+		if (this->outputs[i] == nullptr) 
+			throw std::runtime_error("Creation of jack output port was unsuccessfull");
 	}
 
-	printf("Input port: %s\nOutput port: %s\n", jack_port_name(this->input), jack_port_name(this->output));
+	printf("Input port: %s\n", jack_port_name(this->input)); 
+	for (int i = 0; i < outputcount; i++) 
+		printf("Output port: %s\n", jack_port_name(this->outputs[i]));
 
 }
 
-void Jacker::ConnectPorts(const char * portname, JackPortType type) {
+void Jacker::ConnectPorts(const char * portname, JackPortType type, outputref_t out) {
 	printf("Connecting %s ports matching '%s'\n", type == JackPortType::Input ? "input" : "output", portname);
 	const char ** ports = jack_get_ports(this->jackcl, portname, "midi", type == JackPortType::Input ? JackPortIsOutput : JackPortIsInput);
 
@@ -174,8 +184,8 @@ void Jacker::ConnectPorts(const char * portname, JackPortType type) {
 		}
 	} else {
 		for (int i = 0; ports[i] != nullptr; i++) {
-			ret = jack_connect(this->jackcl, jack_port_name(this->output), ports[i]);
-			printf("\tConnecting output '%s' -> '%s' %s\n", jack_port_name(this->output), ports[i], ret == 0 ? "was successfull" : "\033[31mfailed\033[0m");
+			ret = jack_connect(this->jackcl, jack_port_name(this->outputs[out]), ports[i]);
+			printf("\tConnecting output '%s' -> '%s' %s\n", jack_port_name(this->outputs[out]), ports[i], ret == 0 ? "was successfull" : "\033[31mfailed\033[0m");
 		}
 	}
 
