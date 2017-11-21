@@ -1,6 +1,6 @@
 Jack Midi Drummer
 ===
-Now called "AutoMidiDrummer", but it will be renamed
+Easy configurable drum machine/sequencer. Controlled by MIDI, emiting MIDI.
 
 The goal
 ===
@@ -25,7 +25,7 @@ $ cd jackmididrummer
 $ mkdir build ; cd build
 $ cmake ..
 $ mv config.example config
-$ ./automididrummer # yes, it's called like this for now :)
+$ ./jackmididrummer
 ```
 
 Configuration
